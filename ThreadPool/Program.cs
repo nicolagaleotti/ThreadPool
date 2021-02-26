@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -10,13 +11,17 @@ namespace ThreadPool
 {
     class Program
     {
+
+        static string nome;
+        static List<string> nomi = new List<string>();
+
+
         static void Main(string[] args)
         {
             StreamReader sr = new StreamReader("nomi.txt");
             string file = "nomi.txt";
             if (File.Exists(file))
             {
-                List<string> nomi = new List<string>();
                 string line;
                 while ((line = sr.ReadLine()) != null)
                 {
@@ -24,34 +29,59 @@ namespace ThreadPool
                 }
 
                 Console.WriteLine("Inserisci un nome cognome da cercare");
-                string nome = Console.ReadLine();
+                nome = Console.ReadLine();
+
+                Stopwatch time = new Stopwatch();
+
+                Console.WriteLine("Ricerca con 10 Thread :");
+                time.Start();
+                Thread();
+                time.Stop();
+                Console.WriteLine($"Tempo impiegato dai Thread : {time}\n");
+
+                time.Reset();
+
+                Console.WriteLine("Ricerca con ThreadPool :");
+                time.Start();
+                ThreadPoolMethod();
+                time.Stop();
+                Console.WriteLine($"Tempo impiegato dal ThreadPool : {time}");
             }
         }
 
-        private static void Thread(string nome, List<string> nomi)
+        static void Thread()
         {
             for (int i = 0; i < 10; i++)
             {
-                Thread t = new Thread(() => Research(nome, nomi));
+                Thread t = new Thread(Research);
                 t.Start();
             }
         }
 
-        private static void ThreadPool()
+        static void ThreadPoolMethod()
         {
-
+            for (int i = 0; i < 10; i++)
+            {
+                ThreadPool.QueueUserWorkItem(new WaitCallback(Research));
+            }
         }
 
-        private static string Research(string s, List<string> nomi)
+        static void Research(object callback)
         {
+            bool trovato = false;
             for (int i = 0; i < nomi.Count; i++)
             {
-                if (s == nomi[i])
+                if (nome == nomi[i])
                 {
-                    return $"Il nome ' {s} ' si trova in posizione {i}.";
+                    Console.WriteLine($"Il nome ' {nome} ' si trova in posizione {i}.");
+                    trovato = true;
                 }
             }
-            return $"Il nome ' {s} ' non è stato trovato.";
+
+            if (trovato == false)
+            {
+                Console.WriteLine($"Il nome ' {nome} ' non è stato trovato.");
+            }
         }
     }
 }
